@@ -1,0 +1,43 @@
+library(optmatch)
+matching <- function(x, paired=NA, wave=1){
+  n=dim(x)[1]
+  p=dim(x)[2]
+  colnames(x)[p-1] = "Shock"
+  index = sapply(1:n, function(i){
+    return(sum(sapply((1:p)[-3], function(j){
+      return(is.na(x[i,j]))
+    })))
+  })
+  index = which(index==0)
+  tmp = x[index,-c(3)]
+  tmp1 = tmp[,-(p-1)]
+  propscore.model = glm(Shock ~. -ID, family = binomial, x = TRUE, y= TRUE, data = tmp)
+  X = propscore.model$x[, -1]
+  A = propscore.model$y
+  logitps = predict(propscore.model)
+  distmat = smahal(A, X)
+  rownames(distmat) = rownames(tmp1)[tmp1$Shock == 1]
+  colnames(distmat) = rownames(tmp1)[tmp1$Shock == 0]
+  distmat_caliper = addcaliper(distmat, A, logitps, calipersd = 0.5)
+  noControls = 1
+  system.time({
+    matchvec = pairmatch(distmat_caliper, controls = noControls, data = tmp1)
+  })
+  matchvec.num = as.numeric(substr(matchvec, start = 3, stop = 10))
+  matchvec.num.notNA = matchvec.num[!is.na(matchvec.num)] #To remove individuals who didn't get matched
+  matchID = unique(matchvec.num.notNA)
+  I = length(matchID)
+  matchedPairMat = matrix(0, I, 4)
+  colnames(matchedPairMat) = c("SubjectID (Treated)", "SubjectID (Control)", "PS (Treated)",
+                               "PS (Control)")
+  treatedSubjID = rownames(tmp1)[tmp1$Shock == 1] 
+  controlSubjID = rownames(tmp1)[tmp1$Shock == 0]
+  for (i in 1:I) {
+    subjectIDs = which(matchvec.num == matchID[i])
+    matchedPairMat[i, "SubjectID (Treated)"] = subjectIDs[subjectIDs %in% treatedSubjID]
+    matchedPairMat[i, "SubjectID (Control)"] = subjectIDs[subjectIDs %in% controlSubjID]
+    matchedPairMat[i, "PS (Treated)"] = round(logitps[matchedPairMat[i, "SubjectID (Treated)"]], 3)
+    matchedPairMat[i, "PS (Control)"] = round(logitps[matchedPairMat[i, "SubjectID (Control)"]], 3)
+  }
+  knitr::kable(head(matchedPairMat), caption = "430 Matched Pairs")
+}
