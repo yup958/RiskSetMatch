@@ -191,3 +191,25 @@ for (i in 1:dim(dat)[1]) {
 }
 dat = dat[,-c(57:81)]
 dat = dat[-which(is.na(dat$RAGENDER)),]
+
+### Impute Age variable
+age = dat[ , 18:29]
+tmp = apply(age,1,function(x){
+  t = min(which(!is.na(x)))
+  iage = rep(0,12)
+  for (i in 1:t) {
+    iage[i] = x[t] - 2*(t-i)
+  }
+  for (i in t:12) {
+    iage[i] = x[t] + 2*(i-t)
+  }
+  return(iage)
+})
+tmp = t(tmp)
+dat[,18:29] = tmp
+dat$ID = 1:10007
+
+
+
+
+
