@@ -1,0 +1,77 @@
+setwd("~/Desktop/Course Materials/STAT 992 - Kang/Project 1")
+source("smahal.R")
+source("addcaliper.R")
+source("matching.R")
+load("dat_v3.rdata")
+
+dat$SHOCK2=as.factor(dat$SHOCK2)
+dat$SHOCK3=as.factor(dat$SHOCK3)
+dat$SHOCK4=as.factor(dat$SHOCK4)
+dat$SHOCK5=as.factor(dat$SHOCK5)
+dat$SHOCK6=as.factor(dat$SHOCK6)
+dat$SHOCK7=as.factor(dat$SHOCK7)
+dat$SHOCK8=as.factor(dat$SHOCK8)
+dat$SHOCK9=as.factor(dat$SHOCK9)
+dat$SHOCK10=as.factor(dat$SHOCK10)
+dat$SHOCK11=as.factor(dat$SHOCK11)
+dat$SHOCK12=as.factor(dat$SHOCK12)
+rownames(dat)=dat$ID
+
+### create structured data
+struc_dat = list("1","2","3","4","5","6","7","8","9","10","11","12")
+struc_dat[[1]] = dat[ , which(colnames(dat)%in%c("ID","R1AGEY_B","RAGENDER",
+                                                 "H1ITOT","R1SHLT","R1HLTHLM","SHOCK2",
+                                                 "R1MSTAT","RAEDEGRM","RADYEAR"))]
+struc_dat[[2]] = dat[ , which(colnames(dat)%in%c("ID","R2AGEY_B","RAGENDER","SHOCK3",
+                                                 "H2ITOT","R2SHLT","R2HLTHLM",
+                                                 "R2MSTAT","RAEDEGRM","RADYEAR"))]
+struc_dat[[3]] = dat[ , which(colnames(dat)%in%c("ID","R3AGEY_B","RAGENDER","SHOCK4",
+                                                 "H3ITOT","R3SHLT","R3HLTHLM",
+                                                 "R3MSTAT","RAEDEGRM","RADYEAR"))]
+struc_dat[[4]] = dat[ , which(colnames(dat)%in%c("ID","R4AGEY_B","RAGENDER","SHOCK5",
+                                                 "H4ITOT","R4SHLT","R4HLTHLM",
+                                                 "R4MSTAT","RAEDEGRM","RADYEAR"))]
+struc_dat[[5]] = dat[ , which(colnames(dat)%in%c("ID","R5AGEY_B","RAGENDER","SHOCK6",
+                                                 "H5ITOT","R5SHLT","R5HLTHLM",
+                                                 "R5MSTAT","RAEDEGRM","RADYEAR"))]
+struc_dat[[6]] = dat[ , which(colnames(dat)%in%c("ID","R6AGEY_B","RAGENDER","H6INPOV","SHOCK7",
+                                                 "H6ITOT","R6SHLT","R6HLTHLM",
+                                                 "R6MSTAT","RAEDEGRM","RADYEAR"))]
+struc_dat[[7]] = dat[ , which(colnames(dat)%in%c("ID","R7AGEY_B","RAGENDER","H7INPOV","SHOCK8",
+                                                 "H7ITOT","R7SHLT","R7HLTHLM",
+                                                 "R7MSTAT","RAEDEGRM","RADYEAR"))]
+struc_dat[[8]] = dat[ , which(colnames(dat)%in%c("ID","R8AGEY_B","RAGENDER","H8INPOV","SHOCK9",
+                                                 "H8ITOT","R8SHLT","R8HLTHLM",
+                                                 "R8MSTAT","RAEDEGRM","RADYEAR"))]
+struc_dat[[9]] = dat[ , which(colnames(dat)%in%c("ID","R9AGEY_B","RAGENDER","H9INPOV","SHOCK10",
+                                                 "H9ITOT","R9SHLT","R9HLTHLM",
+                                                 "R9MSTAT","RAEDEGRM","RADYEAR"))]
+struc_dat[[10]] = dat[ , which(colnames(dat)%in%c("ID","R10AGEY_B","RAGENDER","H10INPOV","SHOCK11",
+                                                  "H10ITOT","R10SHLT","R10HLTHLM",
+                                                  "R10MSTAT","RAEDEGRM","RADYEAR"))]
+struc_dat[[11]] = dat[ , which(colnames(dat)%in%c("ID","R11AGEY_B","RAGENDER","H11INPOV","SHOCK12",
+                                                  "H11ITOT","R11SHLT","R11HLTHLM",
+                                                  "R11MSTAT","RAEDEGRM","RADYEAR"))]
+struc_dat[[12]] = dat[ , which(colnames(dat)%in%c("ID","R12AGEY_B","RAGENDER","H12INPOV","SHOCK13",
+                                                  "H12ITOT","R12SHLT","R12HLTHLM",
+                                                  "R12MSTAT","RAEDEGRM","RADYEAR"))]
+system.time({
+  I = matching(struc_dat[[1]])
+  for(i in 2:12){
+    I = matching(struc_dat[[i]], paired = I)
+  }
+})
+
+dat$Deathflag = sapply(1:dim(dat)[1], function(i){
+  if(is.na(dat$RADYEAR[i]))
+    return(0)
+  else
+    return(1)
+})
+
+trt = dat[I[,1],]
+con = dat[I[,2],]
+
+t.test(trt$Deathflag,con$Deathflag)
+
+
